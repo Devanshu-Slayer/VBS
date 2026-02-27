@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VBS — Virtual Banking System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0a0a0f;
+            --card: #16161f;
+            --card2: #1c1c28;
+            --border: rgba(255,255,255,0.06);
+            --border2: rgba(255,255,255,0.12);
+            --gold: #f5c842;
+            --gold-dim: rgba(245,200,66,0.15);
+            --teal: #00d4aa;
+            --teal-dim: rgba(0,212,170,0.12);
+            --rose: #ff4d6d;
+            --sky: #60a5fa;
+            --sky-dim: rgba(96,165,250,0.12);
+            --violet: #a78bfa;
+            --violet-dim: rgba(167,139,250,0.12);
+            --text: #f0f0f5;
+            --muted: #6b6b85;
+            --muted2: #9898b2;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--ink);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow-x: hidden;
+        }
+
+        /* Noise */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        /* Ambient glows */
+        .glow-top {
+            position: fixed;
+            top: -180px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 700px;
+            height: 500px;
+            background: radial-gradient(ellipse, rgba(245,200,66,0.07) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-bottom {
+            position: fixed;
+            bottom: -200px;
+            right: -100px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(ellipse, rgba(0,212,170,0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Card ── */
+        .card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 460px;
+            background: var(--card);
+            border: 1px solid var(--border2);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+            animation: fadeUp 0.6s ease both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Card Top Banner ── */
+        .card-banner {
+            position: relative;
+            padding: 36px 32px 32px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .card-banner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(245,200,66,0.1), transparent 70%);
+            pointer-events: none;
+        }
+
+        .logo-mark {
+            width: 56px;
+            height: 56px;
+            background: var(--gold);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Playfair Display', serif;
+            font-weight: 800;
+            font-size: 20px;
+            color: #000;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(245,200,66,0.3);
+        }
+
+        .brand-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .brand-title span { color: var(--gold); }
+
+        .brand-sub {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted);
+            font-weight: 400;
+        }
+
+        /* ── Card Body ── */
+        .card-body {
+            padding: 32px;
+        }
+
+        .tagline {
+            text-align: center;
+            font-size: 15px;
+            color: var(--muted2);
+            line-height: 1.65;
+            margin-bottom: 30px;
+        }
+
+        /* ── Feature Pills ── */
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 32px;
+        }
+
+        .feature {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 14px;
+            text-align: center;
+            transition: all 0.25s;
+        }
+
+        .feature:hover {
+            transform: translateY(-3px);
+            border-color: var(--border2);
+        }
+
+        .feature:nth-child(1) { border-top: 2px solid var(--teal); }
+        .feature:nth-child(2) { border-top: 2px solid var(--gold); }
+        .feature:nth-child(3) { border-top: 2px solid var(--sky); }
+        .feature:nth-child(4) { border-top: 2px solid var(--violet); }
+
+        .feature-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .feature-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 3px;
+        }
+
+        .feature-desc {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        /* ── Buttons ── */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-login {
+            flex: 1;
+            padding: 14px;
+            background: var(--gold);
+            color: #000;
+            border: none;
+            border-radius: 100px;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.25s;
+            letter-spacing: -0.2px;
+        }
+
+        .btn-login:hover {
+            background: #ffd700;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(245,200,66,0.3);
+        }
+
+        .btn-signup {
+            flex: 1;
+            padding: 14px;
+            background: transparent;
+            color: var(--muted2);
+            border: 1px solid var(--border2);
+            border-radius: 100px;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .btn-signup:hover {
+            background: var(--card2);
+            color: var(--text);
+            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* ── Footer note ── */
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 22px;
+            letter-spacing: 0.3px;
+        }
+
+        .footer-note span {
+            color: var(--teal);
+        }
+
+        @media (max-width: 400px) {
+            .features { grid-template-columns: 1fr 1fr; }
+            .btn-group { flex-direction: column; }
+            .brand-title { font-size: 26px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="glow-top"></div>
+<div class="glow-bottom"></div>
+
+<div class="card">
+
+    <!-- Banner -->
+    <div class="card-banner">
+        <div class="logo-mark">VB</div>
+        <div class="brand-title">Virtual <span>Banking</span></div>
+        <div class="brand-sub">Secure · Simple · Swift</div>
+    </div>
+
+    <!-- Body -->
+    <div class="card-body">
+
+        <p class="tagline">
+            Experience secure and convenient banking at your fingertips. Manage your finances with complete confidence.
+        </p>
+
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">⚡</span>
+                <div class="feature-title">Instant Transfers</div>
+                <div class="feature-desc">Send money in seconds</div>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🔒</span>
+                <div class="feature-title">Secure</div>
+                <div class="feature-desc">Bank-grade protection</div>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">📊</span>
+                <div class="feature-title">Analytics</div>
+                <div class="feature-desc">Track every transaction</div>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🌐</span>
+                <div class="feature-title">24 / 7 Access</div>
+                <div class="feature-desc">Always available</div>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-login" onclick="window.location.href='login.html'">Login</button>
+            <button class="btn-signup" onclick="window.location.href='signup.html'">Sign Up</button>
+        </div>
+
+        <div class="footer-note">
+            Protected by <span>256-bit encryption</span> &nbsp;·&nbsp; VBS © 2025
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

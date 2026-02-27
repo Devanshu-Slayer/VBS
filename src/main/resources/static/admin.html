@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VBS Admin — Virtual Banking System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0a0a0f;
+            --surface: #0f0f18;
+            --card: #16161f;
+            --card2: #1c1c28;
+            --border: rgba(255,255,255,0.06);
+            --border2: rgba(255,255,255,0.12);
+            --gold: #f5c842;
+            --gold-dim: rgba(245,200,66,0.15);
+            --teal: #00d4aa;
+            --teal-dim: rgba(0,212,170,0.12);
+            --rose: #ff4d6d;
+            --rose-dim: rgba(255,77,109,0.12);
+            --sky: #60a5fa;
+            --sky-dim: rgba(96,165,250,0.12);
+            --text: #f0f0f5;
+            --muted: #6b6b85;
+            --muted2: #9898b2;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--ink);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Noise texture overlay ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        /* ── Ambient glow ── */
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 500px;
+            background: radial-gradient(ellipse, rgba(245,200,66,0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+
+        /* ── Top Nav ── */
+        .topnav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 28px 0 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-mark {
+            width: 40px;
+            height: 40px;
+            background: var(--gold);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Playfair Display', serif;
+            font-weight: 800;
+            font-size: 16px;
+            color: #000;
+            letter-spacing: -0.5px;
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.3px;
+        }
+
+        .logo-sub {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-top: 1px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-pill {
+            padding: 8px 18px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border2);
+            background: var(--card);
+            color: var(--muted2);
+            transition: all 0.2s;
+            letter-spacing: 0.2px;
+        }
+
+        .nav-pill:hover {
+            background: var(--card2);
+            color: var(--text);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .nav-pill.danger:hover {
+            background: var(--rose-dim);
+            color: var(--rose);
+            border-color: var(--rose);
+        }
+
+        /* ── Page Title ── */
+        .page-title-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 36px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            line-height: 1;
+        }
+
+        .page-title span {
+            color: var(--gold);
+        }
+
+        .page-subtitle {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        .btn-add {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 22px;
+            background: var(--gold);
+            color: #000;
+            border: none;
+            border-radius: 100px;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.25s;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover {
+            background: #ffd700;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(245,200,66,0.3);
+        }
+
+        .btn-add svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ── Stats Grid ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+
+        @media (max-width: 900px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 500px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .page-title { font-size: 26px; }
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: default;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--border2);
+        }
+
+        .stat-card:hover::before { opacity: 1; }
+
+        .stat-card.gold::before { background: radial-gradient(circle at 0 0, var(--gold-dim), transparent 70%); }
+        .stat-card.teal::before { background: radial-gradient(circle at 0 0, var(--teal-dim), transparent 70%); }
+        .stat-card.rose::before { background: radial-gradient(circle at 0 0, var(--rose-dim), transparent 70%); }
+        .stat-card.sky::before  { background: radial-gradient(circle at 0 0, var(--sky-dim), transparent 70%); }
+
+        .stat-card.gold { border-top: 2px solid var(--gold); }
+        .stat-card.teal { border-top: 2px solid var(--teal); }
+        .stat-card.rose { border-top: 2px solid var(--rose); }
+        .stat-card.sky  { border-top: 2px solid var(--sky); }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card.gold .stat-icon { background: var(--gold-dim); }
+        .stat-card.teal .stat-icon { background: var(--teal-dim); }
+        .stat-card.rose .stat-icon { background: var(--rose-dim); }
+        .stat-card.sky  .stat-icon { background: var(--sky-dim); }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+
+        .stat-card.gold .stat-value { color: var(--gold); }
+        .stat-card.teal .stat-value { color: var(--teal); }
+        .stat-card.rose .stat-value { color: var(--rose); }
+        .stat-card.sky  .stat-value { color: var(--sky); }
+
+        /* ── Controls Row ── */
+        .controls-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .search-wrap {
+            flex: 1;
+            min-width: 220px;
+            display: flex;
+            gap: 0;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .search-wrap:focus-within {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(245,200,66,0.1);
+        }
+
+        .search-icon-wrap {
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        .search-wrap input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 12px 4px;
+            color: var(--text);
+            font-family: 'Lato', sans-serif;
+            font-size: 14px;
+        }
+
+        .search-wrap input::placeholder { color: var(--muted); }
+
+        .search-btn {
+            padding: 10px 18px;
+            background: var(--gold-dim);
+            color: var(--gold);
+            border: none;
+            border-left: 1px solid var(--border);
+            cursor: pointer;
+            font-family: 'Playfair Display', serif;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+
+        .search-btn:hover {
+            background: var(--gold);
+            color: #000;
+        }
+
+        .select-wrap {
+            display: flex;
+            gap: 8px;
+        }
+
+        .styled-select {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--muted2);
+            padding: 0 14px;
+            font-family: 'Lato', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+            min-width: 140px;
+        }
+
+        .styled-select:focus, .styled-select:hover {
+            border-color: var(--border2);
+            color: var(--text);
+        }
+
+        /* ── Table Section ── */
+        .table-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 22px 28px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .table-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .count-badge {
+            background: var(--gold-dim);
+            color: var(--gold);
+            padding: 3px 10px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead tr {
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+
+        tbody tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        td {
+            padding: 16px 20px;
+            font-size: 14px;
+            color: var(--text);
+            vertical-align: middle;
+        }
+
+        .user-id-cell {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .user-name-cell {
+            font-weight: 500;
+        }
+
+        .user-email-cell {
+            font-size: 13px;
+            color: var(--muted2);
+        }
+
+        .balance-cell {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            color: var(--teal);
+            font-size: 14px;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'Playfair Display', serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .role-badge.customer {
+            background: var(--sky-dim);
+            color: var(--sky);
+            border: 1px solid rgba(96,165,250,0.2);
+        }
+
+        .role-badge.admin {
+            background: var(--gold-dim);
+            color: var(--gold);
+            border: 1px solid rgba(245,200,66,0.2);
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: var(--muted2);
+        }
+
+        .btn-icon:hover.view {
+            background: var(--sky-dim);
+            border-color: var(--sky);
+            color: var(--sky);
+        }
+
+        .btn-icon:hover.del {
+            background: var(--rose-dim);
+            border-color: var(--rose);
+            color: var(--rose);
+        }
+
+        /* ── Empty / Error ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        /* ── Pagination ── */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted2);
+            font-family: 'Playfair Display', serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            border-color: var(--border2);
+            color: var(--text);
+        }
+
+        .pagination button.active {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: #000;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .pagination .pg-arrow {
+            width: auto;
+            padding: 0 10px;
+            font-size: 12px;
+        }
+
+        /* ── Flash Message ── */
+        .flash {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            max-width: 320px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .flash.show { display: flex; }
+
+        .flash.success {
+            background: var(--card2);
+            border: 1px solid var(--teal);
+            color: var(--teal);
+        }
+
+        .flash.error {
+            background: var(--card2);
+            border: 1px solid var(--rose);
+            color: var(--rose);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(20px); opacity: 0; }
+            to   { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ── Modal base ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal-box {
+            background: var(--card);
+            border: 1px solid var(--border2);
+            border-radius: 20px;
+            padding: 32px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 24px;
+        }
+
+        /* ── View Modal Details ── */
+        .detail-list { display: flex; flex-direction: column; gap: 0; }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-row:last-child { border-bottom: none; }
+
+        .detail-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--text);
+            font-weight: 500;
+            text-align: right;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        /* ── Form Inputs ── */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: var(--text);
+            font-family: 'Lato', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(245,200,66,0.1);
+        }
+
+        .form-input::placeholder { color: var(--muted); }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* ── Buttons ── */
+        .btn-primary {
+            padding: 12px 24px;
+            background: var(--gold);
+            color: #000;
+            border: none;
+            border-radius: 100px;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #ffd700;
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost {
+            padding: 12px 24px;
+            background: transparent;
+            color: var(--muted2);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-ghost:hover {
+            background: var(--card2);
+            color: var(--text);
+            border-color: var(--border2);
+        }
+
+        .btn-danger {
+            padding: 12px 24px;
+            background: var(--rose);
+            color: #fff;
+            border: none;
+            border-radius: 100px;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .btn-danger:hover {
+            background: #e6364f;
+            transform: translateY(-1px);
+        }
+
+        /* ── Confirm Dialog ── */
+        .confirm-box {
+            max-width: 380px;
+            text-align: center;
+        }
+
+        .confirm-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .confirm-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+        }
+
+        .confirm-body {
+            font-size: 14px;
+            color: var(--muted2);
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .confirm-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .topnav { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .page-title-row { flex-direction: column; align-items: flex-start; }
+            .form-row { grid-template-columns: 1fr; }
+            .select-wrap { width: 100%; }
+            .styled-select { flex: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Flash message -->
+<div class="flash" id="flash">
+    <span id="flashIcon">✓</span>
+    <span id="flashText"></span>
+</div>
+
+<div class="page-wrap">
+
+    <!-- Top Nav -->
+    <nav class="topnav">
+        <div class="logo">
+            <div class="logo-mark">VB</div>
+            <div>
+                <div class="logo-text">VBS Admin</div>
+                <div class="logo-sub">Virtual Banking System</div>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <button class="nav-pill" onclick="goToHistory()">⏱ History</button>
+            <button class="nav-pill danger" onclick="logout()">→ Logout</button>
+        </div>
+    </nav>
+
+    <!-- Title Row -->
+    <div class="page-title-row">
+        <div>
+            <div class="page-title">Admin <span>Dashboard</span></div>
+            <div class="page-subtitle">Manage users, balances and system access</div>
+        </div>
+        <button class="btn-add" onclick="openAddUserModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Add New User
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card gold">
+            <div class="stat-icon">👥</div>
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value" id="totalUsers">0</div>
+        </div>
+        <div class="stat-card teal">
+            <div class="stat-icon">₹</div>
+            <div class="stat-label">Total Balance</div>
+            <div class="stat-value">₹<span id="totalBalance">0</span></div>
+        </div>
+        <div class="stat-card sky">
+            <div class="stat-icon">≈</div>
+            <div class="stat-label">Avg. Balance</div>
+            <div class="stat-value">₹<span id="avgBalance">0</span></div>
+        </div>
+        <div class="stat-card rose">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-label">Active Users</div>
+            <div class="stat-value" id="activeUsers">0</div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-row">
+        <div class="search-wrap">
+            <div class="search-icon-wrap">🔍</div>
+            <input type="text" id="searchInput" placeholder="Search by username…" onkeydown="if(event.key==='Enter') searchUsers()">
+            <button class="search-btn" onclick="searchUsers()">SEARCH</button>
+        </div>
+        <div class="select-wrap">
+            <select class="styled-select" id="sortBy" onchange="applySort()">
+                <option value="id">Sort: ID</option>
+                <option value="name">Sort: Name</option>
+                <option value="username">Sort: Username</option>
+                <option value="balance">Sort: Balance</option>
+            </select>
+            <select class="styled-select" id="sortOrder" onchange="applySort()">
+                <option value="asc">↑ Asc</option>
+                <option value="desc">↓ Desc</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-section">
+        <div class="table-header">
+            <span class="table-title">All Users</span>
+            <span class="count-badge"><span id="displayCount">0</span> users</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Balance</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-icon">⏳</div>
+                            <div class="empty-text">Loading users…</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="paginationControls" class="pagination"></div>
+    </div>
+
+</div>
+
+<!-- View User Modal -->
+<div class="modal-overlay" id="viewUserModal">
+    <div class="modal-box">
+        <div class="modal-title">User Details</div>
+        <div class="detail-list" id="userDetailsContent"></div>
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="closeModal('viewUserModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-overlay" id="addUserModal">
+    <div class="modal-box">
+        <div class="modal-title">Add New User</div>
+        <form id="addUserForm" onsubmit="handleAddUser(event)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Full Name *</label>
+                    <input class="form-input" id="addName" required placeholder="Jane Doe">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Username *</label>
+                    <input class="form-input" id="addUsername" required placeholder="janedoe">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input class="form-input" type="email" id="addEmail" required placeholder="jane@example.com">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Password *</label>
+                    <input class="form-input" type="password" id="addPassword" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Initial Balance *</label>
+                    <input class="form-input" type="number" id="addBalance" required placeholder="0.00" min="0" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Role *</label>
+                <select class="form-select" id="addRole" required>
+                    <option value="">Select Role</option>
+                    <option value="customer">Customer</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-ghost" onclick="closeModal('addUserModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Add User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirm -->
+<div class="modal-overlay" id="deleteConfirmDialog">
+    <div class="modal-box confirm-box">
+        <div class="confirm-icon">🗑️</div>
+        <div class="confirm-title">Delete User?</div>
+        <div class="confirm-body" id="deleteConfirmText">This action cannot be undone.</div>
+        <div class="confirm-btns">
+            <button class="btn-ghost" onclick="closeModal('deleteConfirmDialog')">Cancel</button>
+            <button class="btn-danger" onclick="deleteUser()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:8081';
+    let userId = null;
+    let allUsers = [];
+    let filteredUsers = [];
+    const itemsPerPage = 10;
+    let currentPage = 1;
+    let currentSortBy = 'id';
+    let currentSortOrder = 'asc';
+    let userToDeleteId = null;
+
+    function getUserIdFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        const urlUserId = params.get('id');
+        const urlRole = params.get('role');
+        const storedUserId = localStorage.getItem("userId");
+        const storedRole = localStorage.getItem("role");
+        userId = storedUserId || urlUserId;
+        const role = (storedRole || urlRole || '').toLowerCase();
+        if (!userId) { window.location.href = 'login.html'; return; }
+        if (role !== 'admin') { alert("Unauthorized access"); window.location.href = 'login.html'; }
+    }
+
+    async function loadAllUsers(sortBy = 'id', order = 'asc') {
+        try {
+            const response = await fetch(`${API_URL}/users?sortBy=${sortBy}&order=${order}`);
+            if (!response.ok) throw new Error('Failed to load users');
+            allUsers = await response.json();
+            filteredUsers = [...allUsers];
+            currentSortBy = sortBy;
+            currentSortOrder = order;
+            document.getElementById('sortBy').value = sortBy;
+            document.getElementById('sortOrder').value = order;
+            updateStatistics();
+            displayUsers(filteredUsers);
+        } catch (error) {
+            showFlash('Failed to load users. Make sure backend is running.', 'error');
+            displayErrorState();
+        }
+    }
+
+    function updateStatistics() {
+        const total = allUsers.length;
+        const totalBal = allUsers.reduce((s, u) => s + u.balance, 0);
+        const avgBal = total > 0 ? totalBal / total : 0;
+        const active = allUsers.filter(u => u.balance > 0).length;
+        document.getElementById('totalUsers').textContent = total;
+        document.getElementById('totalBalance').textContent = fmt(totalBal);
+        document.getElementById('avgBalance').textContent = fmt(avgBal);
+        document.getElementById('activeUsers').textContent = active;
+    }
+
+    function fmt(n) {
+        if (n >= 1e7) return (n/1e7).toFixed(1)+'Cr';
+        if (n >= 1e5) return (n/1e5).toFixed(1)+'L';
+        return n.toFixed(2);
+    }
+
+    function applySort() {
+        currentPage = 1;
+        loadAllUsers(document.getElementById('sortBy').value, document.getElementById('sortOrder').value);
+    }
+
+    async function searchUsers() {
+        const term = document.getElementById('searchInput').value.trim();
+        if (!term) { loadAllUsers(currentSortBy, currentSortOrder); return; }
+        try {
+            const r = await fetch(`${API_URL}/users/${encodeURIComponent(term)}`);
+            if (!r.ok) throw new Error('Search failed');
+            filteredUsers = await r.json();
+            currentPage = 1;
+            displayUsers(filteredUsers);
+        } catch {
+            showFlash('Search failed. Backend may be offline.', 'error');
+            filteredUsers = [];
+            displayUsers([]);
+        }
+    }
+
+    function displayUsers(users) {
+        const tbody = document.getElementById('usersTableBody');
+        const pag = document.getElementById('paginationControls');
+        document.getElementById('displayCount').textContent = users.length;
+
+        if (!users.length) {
+            tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">No users found</div></div></td></tr>`;
+            pag.innerHTML = '';
+            return;
+        }
+
+        const totalPages = Math.ceil(users.length / itemsPerPage);
+        const start = (currentPage - 1) * itemsPerPage;
+        const page = users.slice(start, start + itemsPerPage);
+
+        tbody.innerHTML = page.map(u => `
+            <tr>
+                <td><span class="user-id-cell">#${u.id}</span></td>
+                <td><span class="user-name-cell">${u.name}</span></td>
+                <td>${u.username}</td>
+                <td><span class="user-email-cell">${u.email}</span></td>
+                <td><span class="role-badge ${u.role.toLowerCase()}">${u.role}</span></td>
+                <td><span class="balance-cell">₹${u.balance.toFixed(2)}</span></td>
+                <td>
+                    <div class="action-cell">
+                        <button class="btn-icon view" title="View" onclick="viewUser(${u.id})">👁</button>
+                        <button class="btn-icon del" title="Delete" onclick="confirmDeleteUser(${u.id}, '${u.name.replace(/'/g,"\\'")}')">🗑</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        if (totalPages > 1) {
+            let html = `<button class="pg-arrow" ${currentPage===1?'disabled':''} onclick="goToPage(${currentPage-1})">← Prev</button>`;
+            for (let i=1; i<=totalPages; i++) {
+                if (i===currentPage) html += `<button class="active">${i}</button>`;
+                else if (i<=2 || i>=totalPages-1 || Math.abs(i-currentPage)<=1) html += `<button onclick="goToPage(${i})">${i}</button>`;
+                else if (Math.abs(i-currentPage)===2) html += `<button disabled>…</button>`;
+            }
+            html += `<button class="pg-arrow" ${currentPage===totalPages?'disabled':''} onclick="goToPage(${currentPage+1})">Next →</button>`;
+            pag.innerHTML = html;
+        } else {
+            pag.innerHTML = '';
+        }
+    }
+
+    function goToPage(p) { currentPage = p; displayUsers(filteredUsers); }
+
+    function viewUser(id) {
+        const u = allUsers.find(x => x.id === id);
+        if (!u) return;
+        document.getElementById('userDetailsContent').innerHTML = `
+            ${row('ID', '#' + u.id)}
+            ${row('Full Name', u.name)}
+            ${row('Username', u.username)}
+            ${row('Email', u.email)}
+            ${row('Role', `<span class="role-badge ${u.role.toLowerCase()}">${u.role}</span>`)}
+            ${row('Balance', `<span style="color:var(--teal);font-weight:700">₹${u.balance.toFixed(2)}</span>`)}
+        `;
+        openModal('viewUserModal');
+    }
+
+    function row(label, value) {
+        return `<div class="detail-row"><span class="detail-label">${label}</span><span class="detail-value">${value}</span></div>`;
+    }
+
+    function displayErrorState() {
+        document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">❌</div><div class="empty-text">Failed to load users</div></div></td></tr>`;
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); if(id==='addUserModal') document.getElementById('addUserForm').reset(); }
+
+    function openAddUserModal() { openModal('addUserModal'); document.getElementById('addUserForm').reset(); }
+
+    async function handleAddUser(e) {
+        e.preventDefault();
+        const data = {
+            id: 0,
+            name: document.getElementById('addName').value.trim(),
+            username: document.getElementById('addUsername').value.trim(),
+            email: document.getElementById('addEmail').value.trim(),
+            password: document.getElementById('addPassword').value.trim(),
+            balance: parseFloat(document.getElementById('addBalance').value),
+            role: document.getElementById('addRole').value
+        };
+        if (data.balance < 0) { showFlash('Balance cannot be negative', 'error'); return; }
+        try {
+            const r = await fetch(`${API_URL}/add/${userId}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+            if (!r.ok) throw new Error(await r.text());
+            showFlash('User added successfully!', 'success');
+            closeModal('addUserModal');
+            loadAllUsers(currentSortBy, currentSortOrder);
+        } catch (err) {
+            showFlash(`Error: ${err.message}`, 'error');
+        }
+    }
+
+    function confirmDeleteUser(id, name) {
+        userToDeleteId = id;
+        document.getElementById('deleteConfirmText').textContent = `Are you sure you want to delete "${name}"? This action cannot be undone.`;
+        openModal('deleteConfirmDialog');
+    }
+
+    async function deleteUser() {
+        if (!userToDeleteId) return;
+        try {
+            const r = await fetch(`${API_URL}/delete-user/${userToDeleteId}/admin/${userId}`, { method:'DELETE' });
+            const msg = await r.text();
+            if (!r.ok || msg.includes('Please empty') || msg.includes('not found')) {
+                showFlash(msg || 'Delete failed', 'error');
+            } else {
+                showFlash(msg || 'User deleted!', 'success');
+                loadAllUsers(currentSortBy, currentSortOrder);
+            }
+        } catch (err) {
+            showFlash(`Error: ${err.message}`, 'error');
+        }
+        closeModal('deleteConfirmDialog');
+        userToDeleteId = null;
+    }
+
+    function showFlash(msg, type) {
+        const el = document.getElementById('flash');
+        document.getElementById('flashText').textContent = msg;
+        document.getElementById('flashIcon').textContent = type === 'success' ? '✓' : '✕';
+        el.className = `flash ${type} show`;
+        setTimeout(() => el.classList.remove('show'), 3500);
+    }
+
+    function logout() { window.location.href = 'home.html'; }
+    function goToHistory() {
+        const p = new URLSearchParams();
+        if (userId) p.set('id', userId);
+        p.set('role', 'admin');
+        window.location.href = `history.html?${p}`;
+    }
+
+    // Close modals on backdrop click
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+        el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        getUserIdFromURL();
+        loadAllUsers();
+    });
+</script>
+</body>
+</html>

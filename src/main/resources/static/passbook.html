@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VBS — Passbook</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0a0a0f;
+      --surface: #0f0f18;
+      --card: #16161f;
+      --card2: #1c1c28;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.12);
+      --gold: #f5c842;
+      --gold-dim: rgba(245,200,66,0.15);
+      --teal: #00d4aa;
+      --teal-dim: rgba(0,212,170,0.12);
+      --rose: #ff4d6d;
+      --rose-dim: rgba(255,77,109,0.12);
+      --sky: #60a5fa;
+      --sky-dim: rgba(96,165,250,0.12);
+      --text: #f0f0f5;
+      --muted: #6b6b85;
+      --muted2: #9898b2;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Lato', sans-serif;
+      background: var(--ink);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 500px;
+      background: radial-gradient(ellipse, rgba(0,212,170,0.05) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+    }
+
+    /* ── Top Nav ── */
+    .topnav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-mark {
+      width: 40px;
+      height: 40px;
+      background: var(--teal);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-weight: 800;
+      font-size: 15px;
+      color: #000;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    .nav-actions { display: flex; gap: 10px; }
+
+    .nav-pill {
+      padding: 8px 18px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--border2);
+      background: var(--card);
+      color: var(--muted2);
+      transition: all 0.2s;
+      font-family: 'Lato', sans-serif;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .nav-pill:hover {
+      background: var(--card2);
+      color: var(--text);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .nav-pill.danger:hover {
+      background: var(--rose-dim);
+      color: var(--rose);
+      border-color: var(--rose);
+    }
+
+    /* ── Page Title Row ── */
+    .page-title-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1;
+    }
+
+    .page-title span { color: var(--teal); }
+    .page-subtitle { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+    /* ── Balance Card ── */
+    .balance-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--teal);
+      border-radius: 16px;
+      padding: 22px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .balance-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 0% 0%, var(--teal-dim), transparent 60%);
+      pointer-events: none;
+    }
+
+    .balance-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .balance-amount {
+      font-family: 'Playfair Display', serif;
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      color: var(--teal);
+      line-height: 1;
+    }
+
+    .balance-currency { font-size: 20px; opacity: 0.7; }
+
+    .balance-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .tx-count-badge {
+      background: var(--teal-dim);
+      color: var(--teal);
+      border: 1px solid rgba(0,212,170,0.2);
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Playfair Display', serif;
+      white-space: nowrap;
+    }
+
+    /* ── Transactions Card ── */
+    .tx-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .tx-card-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .tx-card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    /* ── Transaction Items ── */
+    .tx-list { display: flex; flex-direction: column; }
+
+    .tx-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 28px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+      gap: 16px;
+    }
+
+    .tx-item:last-child { border-bottom: none; }
+    .tx-item:hover { background: rgba(255,255,255,0.02); }
+
+    .tx-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tx-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .tx-item:hover .tx-icon { transform: scale(1.08); }
+
+    .tx-icon.deposit    { background: var(--teal-dim); border: 1px solid rgba(0,212,170,0.2); }
+    .tx-icon.withdrawal { background: var(--rose-dim); border: 1px solid rgba(255,77,109,0.2); }
+    .tx-icon.transfer   { background: var(--sky-dim);  border: 1px solid rgba(96,165,250,0.2); }
+
+    .tx-desc {
+      font-size: 14px;
+      color: var(--text);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tx-date {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .tx-right { text-align: right; flex-shrink: 0; }
+
+    .tx-amount {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .tx-amount.positive { color: var(--teal); }
+    .tx-amount.negative { color: var(--rose); }
+    .tx-amount.neutral  { color: var(--sky); }
+
+    .tx-balance {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    /* ── Type pill ── */
+    .tx-type-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'Playfair Display', serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 3px;
+    }
+
+    .tx-type-pill.deposit    { background: var(--teal-dim); color: var(--teal); }
+    .tx-type-pill.withdrawal { background: var(--rose-dim); color: var(--rose); }
+    .tx-type-pill.transfer   { background: var(--sky-dim);  color: var(--sky); }
+
+    /* ── Empty State ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+    .empty-text { font-size: 14px; color: var(--muted); }
+
+    /* ── Shimmer ── */
+    .shimmer-wrap { padding: 18px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+    .shimmer-circle { width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; }
+    .shimmer-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .shimmer {
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--card2) 25%, var(--border2) 50%, var(--card2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 20px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .pagination button {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted2);
+      font-family: 'Playfair Display', serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pagination button:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
+    .pagination button.active { background: var(--teal); border-color: var(--teal); color: #000; }
+    .pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .pg-arrow { width: auto !important; padding: 0 10px !important; font-size: 12px !important; }
+
+    @media (max-width: 600px) {
+      .topnav { flex-direction: column; align-items: flex-start; gap: 14px; }
+      .page-title-row { flex-direction: column; align-items: flex-start; }
+      .page-title { font-size: 26px; }
+      .balance-amount { font-size: 28px; }
+      .tx-item { padding: 14px 16px; }
+      .tx-desc { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- Nav -->
+  <nav class="topnav">
+    <div class="logo">
+      <div class="logo-mark">VB</div>
+      <div>
+        <div class="logo-text">VBS</div>
+        <div class="logo-sub">Virtual Banking System</div>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-pill" id="dashLink">← Dashboard</a>
+      <button class="nav-pill danger" onclick="logout()">→ Logout</button>
+    </div>
+  </nav>
+
+  <!-- Title Row -->
+  <div class="page-title-row">
+    <div>
+      <div class="page-title">Your <span>Passbook</span></div>
+      <div class="page-subtitle">Complete transaction history</div>
+    </div>
+  </div>
+
+  <!-- Balance Card -->
+  <div class="balance-card">
+    <div>
+      <div class="balance-label">Current Balance</div>
+      <div class="balance-amount"><span class="balance-currency">₹</span><span id="currentBalance">0.00</span></div>
+      <div class="balance-meta">Last updated just now</div>
+    </div>
+    <span class="tx-count-badge" id="txCountBadge">Loading…</span>
+  </div>
+
+  <!-- Transactions -->
+  <div class="tx-card">
+    <div class="tx-card-header">
+      <span class="tx-card-title">All Transactions</span>
+    </div>
+    <div id="transactionsList" class="tx-list">
+      <!-- shimmer -->
+      <div class="shimmer-wrap"><div class="shimmer shimmer-circle" style="height:44px"></div><div class="shimmer-lines"><div class="shimmer" style="height:14px;width:60%"></div><div class="shimmer" style="height:11px;width:35%"></div></div></div>
+      <div class="shimmer-wrap"><div class="shimmer shimmer-circle" style="height:44px"></div><div class="shimmer-lines"><div class="shimmer" style="height:14px;width:75%"></div><div class="shimmer" style="height:11px;width:40%"></div></div></div>
+      <div class="shimmer-wrap"><div class="shimmer shimmer-circle" style="height:44px"></div><div class="shimmer-lines"><div class="shimmer" style="height:14px;width:50%"></div><div class="shimmer" style="height:11px;width:30%"></div></div></div>
+      <div class="shimmer-wrap"><div class="shimmer shimmer-circle" style="height:44px"></div><div class="shimmer-lines"><div class="shimmer" style="height:14px;width:65%"></div><div class="shimmer" style="height:11px;width:45%"></div></div></div>
+    </div>
+    <div id="paginationControls" class="pagination" style="display:none"></div>
+  </div>
+
+</div>
+
+<script>
+  const API_URL = 'http://localhost:8081';
+  let userId, role;
+  let transactions = [];
+  let currentPage = 1;
+  const itemsPerPage = 10;
+
+  function getUserIdFromURL() {
+    const p = new URLSearchParams(window.location.search);
+    userId = p.get('id');
+    role = p.get('role') || 'customer';
+    if (!userId) { location.href = 'login.html'; return; }
+    document.getElementById('dashLink').href = `dashboard.html?id=${userId}&role=${encodeURIComponent(role)}`;
+  }
+
+  async function loadPassbook() {
+    try {
+      const r = await fetch(`${API_URL}/passbook/${userId}`);
+      transactions = await r.json();
+      if (transactions.length) {
+        const sorted = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+        document.getElementById('currentBalance').textContent = sorted[0].currBalance.toFixed(2);
+      }
+      render();
+    } catch {
+      document.getElementById('transactionsList').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">❌</div>
+                    <div class="empty-text">Failed to load passbook. Ensure backend is running.</div>
+                </div>`;
+      document.getElementById('txCountBadge').textContent = 'Error';
+    }
+  }
+
+  function getType(d) {
+    d = d.toLowerCase();
+    if (d.includes('deposit')) return 'deposit';
+    if (d.includes('withdrawal')) return 'withdrawal';
+    return 'transfer';
+  }
+
+  function render() {
+    const list = document.getElementById('transactionsList');
+    const pag  = document.getElementById('paginationControls');
+    const badge = document.getElementById('txCountBadge');
+
+    if (!transactions.length) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">📒</div><div class="empty-text">No transactions found.</div></div>`;
+      badge.textContent = '0 transactions';
+      pag.style.display = 'none';
+      return;
+    }
+
+    const sorted = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    badge.textContent = `${sorted.length} transaction${sorted.length !== 1 ? 's' : ''}`;
+
+    const totalPages = Math.ceil(sorted.length / itemsPerPage);
+    const slice = sorted.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    const icons = { deposit: '📥', withdrawal: '💸', transfer: '🔁' };
+
+    list.innerHTML = slice.map(t => {
+      const type = getType(t.description);
+      const isPositive = type === 'deposit' || (type === 'transfer' && t.description.toLowerCase().includes('received'));
+      const sign = isPositive ? '+' : '−';
+      const amtClass = isPositive ? 'positive' : type === 'transfer' ? 'neutral' : 'negative';
+      const dateObj = new Date(t.date);
+      const datePart = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timePart = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      return `
+            <div class="tx-item">
+                <div class="tx-left">
+                    <div class="tx-icon ${type}">${icons[type]}</div>
+                    <div>
+                        <div class="tx-desc">${escapeHtml(t.description)}</div>
+                        <div class="tx-date">${datePart} · ${timePart}</div>
+                        <span class="tx-type-pill ${type}">${type}</span>
+                    </div>
+                </div>
+                <div class="tx-right">
+                    <div class="tx-amount ${amtClass}">${sign}₹${t.amount.toFixed(2)}</div>
+                    <div class="tx-balance">Bal ₹${t.currBalance.toFixed(2)}</div>
+                </div>
+            </div>`;
+    }).join('');
+
+    // Pagination
+    if (totalPages > 1) {
+      pag.style.display = 'flex';
+      let html = `<button class="pg-arrow" ${currentPage===1?'disabled':''} onclick="go(${currentPage-1})">← Prev</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage) html += `<button class="active">${i}</button>`;
+        else if (i <= 2 || i >= totalPages - 1 || Math.abs(i - currentPage) <= 1) html += `<button onclick="go(${i})">${i}</button>`;
+        else if (Math.abs(i - currentPage) === 2) html += `<button disabled>…</button>`;
+      }
+      html += `<button class="pg-arrow" ${currentPage===totalPages?'disabled':''} onclick="go(${currentPage+1})">Next →</button>`;
+      pag.innerHTML = html;
+    } else {
+      pag.style.display = 'none';
+    }
+  }
+
+  function go(p) { currentPage = p; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  function logout() { location.href = 'home.html'; }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  }
+
+  window.onload = () => { getUserIdFromURL(); loadPassbook(); };
+</script>
+</body>
+</html>
